@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>音乐播放器 - LRC 歌词同步 + 滚动歌词</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+
+    #player {
+      margin-top: 20px;
+    }
+
+    #lyricsDisplay {
+      margin-top: 10px;
+      white-space: pre-wrap;
+      font-family: monospace;
+      height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      padding: 10px;
+      background-color: #f9f9f9;
+      line-height: 1.6;
+    }
+
+    .highlight {
+      color: red;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>音乐播放器</h1>
+  <form id="uploadForm">
+    <input type="file" id="songInput" accept="audio/*" required>
+    <input type="file" id="lyricsInput" accept=".lrc">
+    <button type="submit">上传</button>
+  </form>
+
+  <div id="player">
+    <audio id="audioPlayer" controls></audio>
+    <div id="lyricsDisplay"></div>
+  </div>
+
+  <script>
+    document.getElementById('uploadForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const songFile = document.getElementById('songInput').files[0];
+      const lyricsFile = document.getElementById('lyricsInput').files[0];
+
+      if (songFile) {
+        // 读取歌曲文件
+        const songURL = URL.createObjectURL(songFile);
+        const audioPlayer = document.getElementById('audioPlayer');
+        audioPlayer.src = songURL;
+
+        // 如果有歌词文件，读取并解析歌词
+        if (lyricsFile) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const lrcText = event.target.result;
+            const lrcData = parseLRC(lrcText);
+            setupLyricsSync(audioPlayer, lrcData);
+          };
+          reader.readAsText(lyricsFile);
+        } else {
+          document.getElementById('lyricsDisplay').textContent = '无歌词';
+        }
+      } else {
+        alert('请上传歌曲文件！');
+      }
+    });
+
+    // 解析 LRC 文件
+    function parseLRC(lrcText) {
+      const lines = lrcText.split('\n');
+      const lrcData = [];
+
+      lines.forEach(line => {
+        const timeMatches = line.match(/\[(\d+):(\d+\.\d+)\]/g);
+        const text = line.replace(/\[(\d+):(\d+\.\d+)\]/g, '').trim();
+
+        if (timeMatches && text) {
+          timeMatches.forEach(timeMatch => {
+            const minutes = parseFloat(timeMatch.match(/\[(\d+):/)[1]);
+            const seconds = parseFloat(timeMatch.match(/:(\d+\.\d+)\]/)[1]);
+            const time = minutes * 60 + seconds;
+            lrcData.push({ time, text });
+          });
+        }
+      });
+
+      // 按时间排序
+      lrcData.sort((a, b) => a.time - b.time);
+      return lrcData;
+    }
+
+    // 设置歌词同步
+    function setupLyricsSync(audioPlayer, lrcData) {
+      const lyricsDisplay = document.getElementById('lyricsDisplay');
+
+      // 渲染歌词
+      function renderLyrics(currentTime) {
+        let currentLyricIndex = -1;
+
+        // 找到当前时间对应的歌词
+        for (let i = 0; i < lrcData.length; i++) {
+          if (currentTime >= lrcData[i].time) {
+            currentLyricIndex = i;
+          } else {
+            break;
+          }
+        }
+
+        // 生成歌词 HTML
+        lyricsDisplay.innerHTML = lrcData
+          。map((line, index) => {
+            if (index === currentLyricIndex) {
+              return `<div class="highlight">${line.text}</div>`;
+            } else {
+              return `<div>${line.text}</div>`;
+            }
+          })
+          。join('');
+
+        // 滚动到当前歌词
+        if (currentLyricIndex >= 0) {
+          const currentLyricElement = lyricsDisplay.children[currentLyricIndex];
+          const offset = currentLyricElement.offsetTop - lyricsDisplay.clientHeight / 2;
+          lyricsDisplay.scrollTo({ top: offset, behavior: 'smooth' });
+        }
+      }
+
+      // 监听音频播放时间更新
+      audioPlayer.addEventListener('timeupdate', () => {
+        const currentTime = audioPlayer.currentTime;
+        renderLyrics(currentTime);
+      });
+
+      // 初始化歌词显示
+      renderLyrics(0);
+    }
+  </script>
+</body>
+</html>
