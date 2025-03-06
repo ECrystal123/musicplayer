@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>音乐播放器 - LRC 歌词同步 + 滚动歌词</title>
+  <title>音乐播放器</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -60,15 +60,6 @@
           return;
         }
 
-        // 检查歌词文件类型
-        if (lyricsFile) {
-          const allowedLyricsTypes = ['text/plain'];
-          if (!allowedLyricsTypes.includes(lyricsFile.type) || !lyricsFile.name.endsWith('.lrc')) {
-            alert('仅支持上传 LRC 格式的歌词文件！');
-            return;
-          }
-        }
-
         // 读取歌曲文件
         const songURL = URL.createObjectURL(songFile);
         const audioPlayer = document.getElementById('audioPlayer');
@@ -79,8 +70,13 @@
           const reader = new FileReader();
           reader.onload = (event) => {
             const lrcText = event.target.result;
-            const lrcData = parseLRC(lrcText);
-            setupLyricsSync(audioPlayer, lrcData);
+            try {
+              const lrcData = parseLRC(lrcText);
+              setupLyricsSync(audioPlayer, lrcData);
+            } catch (error) {
+              alert('歌词文件格式不正确，请上传有效的 LRC 文件！');
+              console.error(error);
+            }
           };
           reader.readAsText(lyricsFile);
         } else {
@@ -109,6 +105,11 @@
           });
         }
       });
+
+      // 如果没有解析到有效的歌词数据，抛出错误
+      if (lrcData.length === 0) {
+        throw new Error('无效的 LRC 文件格式');
+      }
 
       // 按时间排序
       lrcData.sort((a, b) => a.time - b.time);
