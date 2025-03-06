@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>音乐播放器 - LRC 歌词同步 + 滚动歌词</title>
+  <title>音乐播放器</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -53,6 +53,13 @@
       const lyricsFile = document.getElementById('lyricsInput').files[0];
 
       if (songFile) {
+        // 检查文件类型
+        const allowedTypes = ['audio/mp3', 'audio/mpeg', 'audio/x-m4a', 'audio/wav'];
+        if (!allowedTypes.includes(songFile.type)) {
+          alert('仅支持上传 MP3、M4A、WAV 格式的音频文件！');
+          return;
+        }
+
         // 读取歌曲文件
         const songURL = URL.createObjectURL(songFile);
         const audioPlayer = document.getElementById('audioPlayer');
@@ -118,14 +125,14 @@
 
         // 生成歌词 HTML
         lyricsDisplay.innerHTML = lrcData
-          。map((line, index) => {
+          .map((line, index) => {
             if (index === currentLyricIndex) {
               return `<div class="highlight">${line.text}</div>`;
             } else {
               return `<div>${line.text}</div>`;
             }
           })
-          。join('');
+          .join('');
 
         // 滚动到当前歌词
         if (currentLyricIndex >= 0) {
