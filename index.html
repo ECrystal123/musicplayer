@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>音乐播放器</title>
+  <title>音乐播放器 - LRC 歌词同步 + 滚动歌词</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -35,8 +35,8 @@
 <body>
   <h1>音乐播放器</h1>
   <form id="uploadForm">
-    <input type="file" id="songInput" accept="audio/*" required>
-    <input type="file" id="lyricsInput" accept=".lrc">
+    <input type="file" id="songInput" required>
+    <input type="file" id="lyricsInput">
     <button type="submit">上传</button>
   </form>
 
@@ -53,11 +53,20 @@
       const lyricsFile = document.getElementById('lyricsInput').files[0];
 
       if (songFile) {
-        // 检查文件类型
-        const allowedTypes = ['audio/mp3', 'audio/mpeg', 'audio/x-m4a', 'audio/wav'];
-        if (!allowedTypes.includes(songFile.type)) {
+        // 检查音频文件类型
+        const allowedAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/x-m4a', 'audio/wav'];
+        if (!allowedAudioTypes.includes(songFile.type)) {
           alert('仅支持上传 MP3、M4A、WAV 格式的音频文件！');
           return;
+        }
+
+        // 检查歌词文件类型
+        if (lyricsFile) {
+          const allowedLyricsTypes = ['text/plain'];
+          if (!allowedLyricsTypes.includes(lyricsFile.type) || !lyricsFile.name.endsWith('.lrc')) {
+            alert('仅支持上传 LRC 格式的歌词文件！');
+            return;
+          }
         }
 
         // 读取歌曲文件
