@@ -5,9 +5,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>音乐播放器</title>
   <style>
+    /* 基础样式 */
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
+      background-color: #ffffff;
+      color: #333333;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    #uploadForm {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    #uploadForm input[type="file"] {
+      padding: 10px;
+      border: 1px solid #cccccc;
+      border-radius: 5px;
+      background-color: #f9f9f9;
+      transition: border-color 0.3s, background-color 0.3s;
+    }
+
+    #uploadForm button {
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #uploadForm button:hover {
+      background-color: #0056b3;
     }
 
     #player {
@@ -20,19 +58,68 @@
       font-family: monospace;
       padding: 10px;
       line-height: 1.6;
-      border: none; /* 移除边框 */
-      background-color: transparent; /* 移除背景颜色 */
-      overflow-y: visible; /* 关闭滚动 */
-      height: auto; /* 高度自动撑开 */
+      border: none;
+      background-color: transparent;
+      overflow-y: visible;
+      height: auto;
     }
 
     .highlight {
-      color: red;
+      color: #ff0000;
       font-weight: bold;
+    }
+
+    /* 黑暗模式样式 */
+    body.dark-mode {
+      background-color: #121212;
+      color: #ffffff;
+    }
+
+    body.dark-mode #uploadForm input[type="file"] {
+      border-color: #444444;
+      background-color: #1e1e1e;
+      color: #ffffff;
+    }
+
+    body.dark-mode #uploadForm button {
+      background-color: #1a73e8;
+    }
+
+    body.dark-mode #uploadForm button:hover {
+      background-color: #1557b0;
+    }
+
+    /* 黑暗模式切换按钮 */
+    #darkModeToggle {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      padding: 10px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007bff;
+      color: #ffffff;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #darkModeToggle:hover {
+      background-color: #0056b3;
+    }
+
+    body.dark-mode #darkModeToggle {
+      background-color: #1a73e8;
+    }
+
+    body.dark-mode #darkModeToggle:hover {
+      background-color: #1557b0;
     }
   </style>
 </head>
 <body>
+  <!-- 黑暗模式切换按钮 -->
+  <button id="darkModeToggle">切换黑暗模式</button>
+
   <h1>音乐播放器</h1>
   <form id="uploadForm">
     <input type="file" id="songInput" required>
@@ -46,6 +133,24 @@
   </div>
 
   <script>
+    // 黑暗模式切换逻辑
+    const darkModeToggle = document.getElementById('darkModeToggle');
+    const body = document.body;
+
+    // 从 localStorage 中读取黑暗模式状态
+    const isDarkMode = localStorage.getItem('dark-mode') === 'true';
+    if (isDarkMode) {
+      body.classList.add('dark-mode');
+    }
+
+    // 切换黑暗模式
+    darkModeToggle.addEventListener('click', () => {
+      body.classList.toggle('dark-mode');
+      const isDarkMode = body.classList.contains('dark-mode');
+      localStorage.setItem('dark-mode', isDarkMode); // 保存状态到 localStorage
+    });
+
+    // 文件上传和歌词同步逻辑
     document.getElementById('uploadForm').addEventListener('submit', (e) => {
       e.preventDefault();
 
