@@ -8,9 +8,6 @@
     body {
       font-family: Arial, sans-serif;
       margin: 20px;
-      display: flex;
-      flex-direction: column;
-      height: 100vh; /* 使页面占满整个视口高度 */
     }
 
     #player {
@@ -21,12 +18,12 @@
       margin-top: 10px;
       white-space: pre-wrap;
       font-family: monospace;
-      overflow-y: auto;
       padding: 10px;
       line-height: 1.6;
       border: none; /* 移除边框 */
       background-color: transparent; /* 移除背景颜色 */
-      flex-grow: 1; /* 动态调整高度 */
+      overflow-y: visible; /* 关闭滚动 */
+      height: auto; /* 高度自动撑开 */
     }
 
     .highlight {
@@ -146,13 +143,6 @@
             }
           })
           .join('');
-
-        // 滚动到当前歌词
-        if (currentLyricIndex >= 0) {
-          const currentLyricElement = lyricsDisplay.children[currentLyricIndex];
-          const offset = currentLyricElement.offsetTop - lyricsDisplay.clientHeight / 2;
-          lyricsDisplay.scrollTo({ top: offset, behavior: 'smooth' });
-        }
       }
 
       // 监听音频播放时间更新
@@ -164,25 +154,6 @@
       // 初始化歌词显示
       renderLyrics(0);
     }
-
-    // 动态调整歌词区域高度
-    function adjustLyricsHeight() {
-      const lyricsDisplay = document.getElementById('lyricsDisplay');
-      const playerHeight = document.getElementById('player').clientHeight;
-      const formHeight = document.getElementById('uploadForm').clientHeight;
-      const headerHeight = document.querySelector('h1').clientHeight;
-      const margin = 20; // 页面的 margin
-
-      // 计算可用高度
-      const availableHeight = window.innerHeight - (playerHeight + formHeight + headerHeight + margin);
-      lyricsDisplay.style.height = `${availableHeight}px`;
-    }
-
-    // 监听窗口大小变化
-    window.addEventListener('resize', adjustLyricsHeight);
-
-    // 初始化时调整歌词区域高度
-    adjustLyricsHeight();
   </script>
 </body>
 </html>
