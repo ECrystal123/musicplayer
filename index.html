@@ -117,6 +117,13 @@
       font-weight: bold;
     }
 
+    .error-message {
+      color: #dc3545;
+      font-size: 0.9em;
+      margin-top: 5px;
+      display: none;
+    }
+
     /* 黑暗模式样式 */
     body.dark-mode {
       background-color: #121212;
@@ -143,6 +150,10 @@
 
     body.dark-mode #lyricsDisplay {
       background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    body.dark-mode .error-message {
+      color: #ff6b6b;
     }
 
     /* 黑暗模式切换按钮 */
@@ -191,9 +202,15 @@
 
   <h1>音乐播放器</h1>
   <form id="uploadForm">
-    <input type="file" id="songInput" accept="audio/*" required>
-    <input type="file" id="lyricsInput" accept=".lrc">
-    <input type="file" id="albumArtInput" accept="image/*">
+    <input type="file" id="songInput" required>
+    <div id="songError" class="error-message"></div>
+    
+    <input type="file" id="lyricsInput">
+    <div id="lyricsError" class="error-message"></div>
+    
+    <input type="file" id="albumArtInput">
+    <div id="albumArtError" class="error-message"></div>
+    
     <button type="submit">上传</button>
   </form>
 
@@ -227,6 +244,36 @@
       localStorage.setItem('dark-mode', isDarkMode); // 保存状态到 localStorage
     });
 
+    // 允许的文件类型
+    const allowedAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/x-m4a', 'audio/wav', 'audio/ogg'];
+    const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
+    // 显示错误消息
+    function showError(elementId, message) {
+      const errorElement = document.getElementById(elementId);
+      errorElement.textContent = message;
+      errorElement.style.display = 'block';
+    }
+
+    // 隐藏错误消息
+    function hideError(elementId) {
+      const errorElement = document.getElementById(elementId);
+      errorElement.style.display = 'none';
+    }
+
+    // 验证文件类型
+    function validateFile(file, allowedTypes, fileType) {
+      if (!file) return true;
+      
+      if (!allowedTypes.includes(file.type)) {
+        showError(`${fileType}Error`, `不支持的文件类型，请上传${allowedTypes.join('、')}格式的文件`);
+        return false;
+      }
+      
+      hideError(`${fileType}Error`);
+      return true;
+    }
+
     // 文件上传和歌词同步逻辑
     document.getElementById('uploadForm').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -235,53 +282,50 @@
       const lyricsFile = document.getElementById('lyricsInput').files[0];
       const albumArtFile = document.getElementById('albumArtInput').files[0];
 
-      if (songFile) {
-        // 检查音频文件类型
-        const allowedAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/x-m4a', 'audio/wav', 'audio/ogg'];
-        if (!allowedAudioTypes.includes(songFile.type)) {
-          alert('仅支持上传 MP3、M4A、WAV、OGG 格式的音频文件！');
-          return;
-        }
+      // 验证所有文件类型
+      const isSongValid = validateFile(songFile, allowedAudioTypes, 'song');
+      const isLyricsValid = lyricsFile ? validateFile(lyricsFile, ['text/plain'], 'lyrics') : true;
+      const isAlbumArtValid = albumArtFile ? validateFile(albumArtFile, allowedImageTypes, 'albumArt') : true;
 
-        // 读取歌曲文件
-        const songURL = URL.createObjectURL(songFile);
-        const audioPlayer = document.getElementById('audioPlayer');
-        audioPlayer.src = songURL;
+      if (!isSongValid || !isLyricsValid || !isAlbumArtValid) {
+        return;
+      }
 
-        // 如果有专辑图片文件，读取并显示
-        if (albumArtFile) {
-          const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-          if (!allowedImageTypes.includes(albumArtFile.type)) {
-            alert('仅支持上传 JPG、PNG、GIF、WEBP 格式的图片！');
-            return;
-          }
-          
-          const albumArtURL = URL.createObjectURL(albumArtFile);
-          document.getElementById('albumArt').src = albumArtURL;
-        } else {
-          // 重置为默认专辑封面
-          document.getElementById('albumArt').src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f0f0f0'/%3E%3Cpath d='M150 75L100 150H50L150 50l100 100h-50l-50-75zm0 150l50-75h50l-100 100-100-100h50l50 75z' fill='%23ccc'/%3E%3C/svg%3E";
-        }
+      if (!songFile) {
+        showError('songError', '请上传歌曲文件');
+        return;
+      }
 
-        // 如果有歌词文件，读取并解析歌词
-        if (lyricsFile) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const lrcText = event.target.result;
-            try {
-              const lrcData = parseLRC(lrcText);
-              setupLyricsSync(audioPlayer, lrcData);
-            } catch (error) {
-              alert('歌词文件格式不正确，请上传有效的 LRC 文件！');
-              console.error(error);
-            }
-          };
-          reader.readAsText(lyricsFile);
-        } else {
-          document.getElementById('lyricsDisplay').textContent = '无歌词';
-        }
+      // 读取歌曲文件
+      const songURL = URL.createObjectURL(songFile);
+      const audioPlayer = document.getElementById('audioPlayer');
+      audioPlayer.src = songURL;
+
+      // 如果有专辑图片文件，读取并显示
+      if (albumArtFile) {
+        const albumArtURL = URL.createObjectURL(albumArtFile);
+        document.getElementById('albumArt').src = albumArtURL;
       } else {
-        alert('请上传歌曲文件！');
+        // 重置为默认专辑封面
+        document.getElementById('albumArt').src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f0f0f0'/%3E%3Cpath d='M150 75L100 150H50L150 50l100 100h-50l-50-75zm0 150l50-75h50l-100 100-100-100h50l50 75z' fill='%23ccc'/%3E%3C/svg%3E";
+      }
+
+      // 如果有歌词文件，读取并解析歌词
+      if (lyricsFile) {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const lrcText = event.target.result;
+          try {
+            const lrcData = parseLRC(lrcText);
+            setupLyricsSync(audioPlayer, lrcData);
+          } catch (error) {
+            showError('lyricsError', '歌词文件格式不正确，请上传有效的 LRC 文件！');
+            console.error(error);
+          }
+        };
+        reader.readAsText(lyricsFile);
+      } else {
+        document.getElementById('lyricsDisplay').textContent = '无歌词';
       }
     });
 
