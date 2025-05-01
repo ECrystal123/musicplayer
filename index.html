@@ -24,6 +24,9 @@
       flex-direction: column;
       gap: 10px;
       margin-bottom: 20px;
+      max-width: 500px;
+      margin-left: auto;
+      margin-right: auto;
     }
 
     #uploadForm input[type="file"] {
@@ -50,6 +53,49 @@
 
     #player {
       margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    #playerContainer {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 30px;
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    #albumArtContainer {
+      width: 300px;
+      height: 300px;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      background-color: #f0f0f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #albumArt {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    #audioAndLyrics {
+      flex: 1;
+      min-width: 300px;
+      max-width: 500px;
+    }
+
+    #audioPlayer {
+      width: 100%;
+      margin-bottom: 20px;
     }
 
     #lyricsDisplay {
@@ -60,8 +106,10 @@
       line-height: 1.6;
       border: none;
       background-color: transparent;
-      overflow-y: visible;
-      height: auto;
+      overflow-y: auto;
+      max-height: 300px;
+      border-radius: 5px;
+      background-color: rgba(0, 0, 0, 0.05);
     }
 
     .highlight {
@@ -89,6 +137,14 @@
       background-color: #1557b0;
     }
 
+    body.dark-mode #albumArtContainer {
+      background-color: #2a2a2a;
+    }
+
+    body.dark-mode #lyricsDisplay {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
     /* 黑暗模式切换按钮 */
     #darkModeToggle {
       position: fixed;
@@ -114,6 +170,19 @@
     body.dark-mode #darkModeToggle:hover {
       background-color: #1557b0;
     }
+
+    /* 响应式设计 */
+    @media (max-width: 768px) {
+      #playerContainer {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      #albumArtContainer {
+        width: 200px;
+        height: 200px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -122,14 +191,22 @@
 
   <h1>音乐播放器</h1>
   <form id="uploadForm">
-    <input type="file" id="songInput" required>
-    <input type="file" id="lyricsInput">
+    <input type="file" id="songInput" accept="audio/*" required>
+    <input type="file" id="lyricsInput" accept=".lrc">
+    <input type="file" id="albumArtInput" accept="image/*">
     <button type="submit">上传</button>
   </form>
 
   <div id="player">
-    <audio id="audioPlayer" controls></audio>
-    <div id="lyricsDisplay"></div>
+    <div id="playerContainer">
+      <div id="albumArtContainer">
+        <img id="albumArt" src="data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f0f0f0'/%3E%3Cpath d='M150 75L100 150H50L150 50l100 100h-50l-50-75zm0 150l50-75h50l-100 100-100-100h50l50 75z' fill='%23ccc'/%3E%3C/svg%3E" alt="默认专辑封面">
+      </div>
+      <div id="audioAndLyrics">
+        <audio id="audioPlayer" controls></audio>
+        <div id="lyricsDisplay">请上传音乐文件和歌词</div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -156,12 +233,13 @@
 
       const songFile = document.getElementById('songInput').files[0];
       const lyricsFile = document.getElementById('lyricsInput').files[0];
+      const albumArtFile = document.getElementById('albumArtInput').files[0];
 
       if (songFile) {
         // 检查音频文件类型
-        const allowedAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/x-m4a', 'audio/wav'];
+        const allowedAudioTypes = ['audio/mp3', 'audio/mpeg', 'audio/x-m4a', 'audio/wav', 'audio/ogg'];
         if (!allowedAudioTypes.includes(songFile.type)) {
-          alert('仅支持上传 MP3、M4A、WAV 格式的音频文件！');
+          alert('仅支持上传 MP3、M4A、WAV、OGG 格式的音频文件！');
           return;
         }
 
@@ -169,6 +247,21 @@
         const songURL = URL.createObjectURL(songFile);
         const audioPlayer = document.getElementById('audioPlayer');
         audioPlayer.src = songURL;
+
+        // 如果有专辑图片文件，读取并显示
+        if (albumArtFile) {
+          const allowedImageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+          if (!allowedImageTypes.includes(albumArtFile.type)) {
+            alert('仅支持上传 JPG、PNG、GIF、WEBP 格式的图片！');
+            return;
+          }
+          
+          const albumArtURL = URL.createObjectURL(albumArtFile);
+          document.getElementById('albumArt').src = albumArtURL;
+        } else {
+          // 重置为默认专辑封面
+          document.getElementById('albumArt').src = "data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300' viewBox='0 0 300 300'%3E%3Crect width='300' height='300' fill='%23f0f0f0'/%3E%3Cpath d='M150 75L100 150H50L150 50l100 100h-50l-50-75zm0 150l50-75h50l-100 100-100-100h50l50 75z' fill='%23ccc'/%3E%3C/svg%3E";
+        }
 
         // 如果有歌词文件，读取并解析歌词
         if (lyricsFile) {
@@ -248,6 +341,15 @@
             }
           })
           .join('');
+
+        // 自动滚动到当前歌词
+        const highlightedLyric = lyricsDisplay.querySelector('.highlight');
+        if (highlightedLyric) {
+          highlightedLyric.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+        }
       }
 
       // 监听音频播放时间更新
